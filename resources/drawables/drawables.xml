@@ -1,5 +1,5 @@
 <drawables>
-    <bitmap id="LauncherIcon" filename="launcher_40_40.png" />
+    <bitmap id="LauncherIcon" filename="launcher_65_65.png" />
 
     <!-- aiSR icons -->
     <bitmap id="aiSRDark" x="center" y="center" filename="UpDown.svg" scaleX="6%" scaleY="6%" scaleRelativeTo="screen">

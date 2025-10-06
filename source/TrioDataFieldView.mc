@@ -12,7 +12,6 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-
 class TrioDataFieldView extends WatchUi.DataField {
 
     private var isBottomPosition = false;
@@ -21,100 +20,120 @@ class TrioDataFieldView extends WatchUi.DataField {
         DataField.initialize();
     }
 
-    // The given info object contains all the current workout information.
-    // Calculate a value and save it locally in this method.
-    // Note that compute() and onUpdate() are asynchronous, and there is no
-    // guarantee that compute() will be called before onUpdate().
     function compute(info) {
     }
 
-function onLayout(dc as Dc) as Void {
-    var obscurityFlags = DataField.getObscurityFlags();
-    
-    if ((obscurityFlags & OBSCURE_TOP) != 0) {
-        isBottomPosition = true;
-        View.setLayout(Rez.Layouts.MainLayout(dc));
-    } else {
-        isBottomPosition = false;
-        View.setLayout(Rez.Layouts.BottomLayout(dc));
+    function onLayout(dc as Dc) as Void {
+        var obscurityFlags = DataField.getObscurityFlags();
+        
+        if ((obscurityFlags & OBSCURE_TOP) != 0) {
+            isBottomPosition = true;
+            View.setLayout(Rez.Layouts.MainLayout(dc));
+        } else {
+            isBottomPosition = false;
+            View.setLayout(Rez.Layouts.BottomLayout(dc));
+        }
+
+        (View.findDrawableById("label") as Text).setText(Rez.Strings.label);
+        
+        var screenHeight = dc.getHeight();
+        if (screenHeight <= 260) {
+            var valueView = View.findDrawableById("value") as Text;
+            if (valueView != null) {
+                if (isBottomPosition) {
+                    valueView.locY = dc.getHeight() * 0.10;
+                } else {
+                    valueView.locY = dc.getHeight() * 0.50;
+                }
+            }
+            
+            var labelView = View.findDrawableById("label") as Text;
+            if (labelView != null) {
+                if (isBottomPosition) {
+                    labelView.locY = dc.getHeight() * 0.20;
+                } else {
+                    labelView.locY = dc.getHeight() * 0.60;
+                }
+            }
+        }
     }
 
-    (View.findDrawableById("label") as Text).setText(Rez.Strings.label);
-    
-    // Adjust BG position for small screens (Fenix 5 and similar)
-    var screenHeight = dc.getHeight();
-    if (screenHeight <= 260) {  // Fenix 5/5S have 218px height or less
-        var valueView = View.findDrawableById("value") as Text;
-        if (valueView != null) {
-            if (isBottomPosition) {
-                valueView.locY = dc.getHeight() * 0.10;  // 5% for top line
-            } else {
-                valueView.locY = dc.getHeight() * 0.50;  // 40% for bottom line
-            }
+    function isMMOL(status) as Boolean {
+        if (status instanceof Dictionary) {
+            var unitsHint = status["units_hint"];
+            return (unitsHint != null && unitsHint.equals("mmol"));
         }
-        
-        var labelView = View.findDrawableById("label") as Text;
-        if (labelView != null) {
-            if (isBottomPosition) {
-                labelView.locY = dc.getHeight() * 0.20;  // 20% for top line
-            } else {
-                labelView.locY = dc.getHeight() * 0.60;  // 55% for bottom line
-            }
-        }
+        return false;
     }
-}
+    
+    function convertGlucoseValue(value, status) as Float {
+        if (value instanceof Number) {
+            if (isMMOL(status)) {
+                return value * 0.05556;
+            }
+            return value.toFloat();
+        }
+        return 0.0;
+    }
 
     function onUpdate(dc as Dc) as Void {
         var bgString;
         var loopColor;
         var evBGString;
-        var rightSideString;  // Either sensRatio or COB
+        var rightSideString;
         var showingSensRatio = false;
         var iobString;
-        var status = Application.Storage.getValue("status") as Dictionary;
+        
+        // Safely get status from storage - handle both Array and Dictionary
+        var storageData = Application.Storage.getValue("status");
+        var status = null;
+        
+        if (storageData != null) {
+            if (storageData instanceof Lang.Array && storageData.size() > 0) {
+                // Array received - take first element
+                status = storageData[0];
+            } else if (storageData instanceof Lang.Dictionary) {
+                // Dictionary received - use directly
+                status = storageData;
+            }
+        }
 
-        if (status == null) {
+        if (status == null || !(status instanceof Lang.Dictionary)) {
             bgString = "---";
             loopColor = getLoopColor(-1);
             evBGString = "(---)";
             rightSideString = "??";
             iobString = "??";
         } else {
-            var bg = status["glucose"] as String;
-            bgString = (bg == null) ? "--" : bg as String;
+            bgString = getGlucoseText(status);
             var min = getMinutes(status);
             loopColor = getLoopColor(min);
-            var evBG = status["eventualBGRaw"] as String;
-            evBGString = "(" + ((evBG == null) ? "--" : evBG) + ")" as String;
+            evBGString = "(" + getEventualBGText(status) + ")";
             
-            // Check for sensRatio first, then COB
             var sensRatio = status["sensRatio"];
             var cob = status["cob"];
             
             if (sensRatio != null) {
-                rightSideString = getSensRatioText(status) as String;
+                rightSideString = getSensRatioText(status);
                 showingSensRatio = true;
             } else if (cob != null) {
-                rightSideString = getCOBText(status) as String;
+                rightSideString = getCOBText(status);
                 showingSensRatio = false;
             } else {
                 rightSideString = "??";
                 showingSensRatio = false;
             }
             
-            iobString = getIOBText(status) as String;
+            iobString = getIOBText(status);
         }
 
-        // Dynamic positioning: adjust BG and arrow based on glucose value width
         var screenWidth = dc.getWidth();
         var centerX = screenWidth / 2;
         var largeFont = Graphics.FONT_SYSTEM_LARGE;
         var xtinyFont = Graphics.FONT_SYSTEM_XTINY;
         
-        // Calculate actual glucose value width
         var currentValueWidth = dc.getTextWidthInPixels(bgString, largeFont);
         
-        // Adjust BG and arrow positions dynamically
         var labelView = View.findDrawableById("label");
         if (labelView != null) {
             labelView.locX = centerX - (currentValueWidth / 2) - (screenWidth * 0.07);
@@ -125,105 +144,81 @@ function onLayout(dc as Dc) as Void {
             valueViewArrow.locX = centerX + (currentValueWidth / 2) + (screenWidth * 0.03);
         }
 
-        // Dynamic positioning for second line: IOB value, eventual BG, sensRatio/COB
         var valueViewIOB = View.findDrawableById("valueIOB");
         var valueViewIOBUnit = View.findDrawableById("valueIOBUnit");
         var valueViewEventualBG = View.findDrawableById("valueEventualBG");
         
-        // Define margins
         var leftMargin = 0.08;
         var rightMargin = 0.08;
 
-        // LEFT SIDE: IOB value left-aligned with "U" right after
         if (valueViewIOB != null && valueViewIOBUnit != null) {
             var iobTextWidth = dc.getTextWidthInPixels(iobString, largeFont);
             var iobStartX = screenWidth * leftMargin;
             
-            // IOB value left-aligned
             valueViewIOB.locX = iobStartX;
             (valueViewIOB as Text).setJustification(Graphics.TEXT_JUSTIFY_LEFT);
             
-            // "U" unit positioned right after IOB number
             valueViewIOBUnit.locX = iobStartX + iobTextWidth + 2;
             (valueViewIOBUnit as Text).setJustification(Graphics.TEXT_JUSTIFY_LEFT);
 
-            // Adjust vertical position to align baselines
             var largeHeight = dc.getFontHeight(largeFont);
             var xtinyHeight = dc.getFontHeight(xtinyFont);
             valueViewIOBUnit.locY = valueViewIOB.locY + (largeHeight - xtinyHeight) * 0.8;
         }
 
-        // Handle right side - either sensRatio with icon or COB with "g" unit
         var valueViewAiSRIcon = View.findDrawableById("aiSRIcon");
         var valueViewAiSR = View.findDrawableById("valueAiSR");
         var valueViewAiSRUnit = View.findDrawableById("valueAiSRUnit");
 
         if (showingSensRatio) {
-            // Position sensRatio with icon on the right
             if (valueViewAiSRIcon != null && valueViewAiSR != null && valueViewAiSRUnit != null) {
                 var sensRatioTextWidth = dc.getTextWidthInPixels(rightSideString, largeFont);
                 var rightEdgeX = screenWidth * (1 - rightMargin);
                 
-                // sensRatio text right-aligned at right margin
                 valueViewAiSR.locX = rightEdgeX;
                 (valueViewAiSR as Text).setJustification(Graphics.TEXT_JUSTIFY_RIGHT);
                 
-                // Icon positioned to the left of the text
                 valueViewAiSRIcon.locX = rightEdgeX - sensRatioTextWidth - (screenWidth * 0.07);
                 
-                // Hide the unit label for sensRatio
                 valueViewAiSRUnit.locX = -100;
             }
         } else {
-            // RIGHT SIDE: COB value right-aligned with "g" right after
             if (valueViewAiSRIcon != null && valueViewAiSR != null && valueViewAiSRUnit != null) {
-                // RIGHT SIDE: COB value with "g" at right margin (92%)
                 var cobTextWidth = dc.getTextWidthInPixels(rightSideString, largeFont);
                 var gUnitWidth = dc.getTextWidthInPixels("g", xtinyFont);
                 var rightEdgeX = screenWidth * (1 - rightMargin);
 
-                // Hide the icon
                 valueViewAiSRIcon.locX = -100;
 
-                // "g" unit positioned AT the right margin (92%)
                 valueViewAiSRUnit.locX = rightEdgeX - gUnitWidth;
                 (valueViewAiSRUnit as Text).setJustification(Graphics.TEXT_JUSTIFY_LEFT);
 
-                // COB value positioned to the LEFT of "g"
                 valueViewAiSR.locX = rightEdgeX - gUnitWidth - 2;
                 (valueViewAiSR as Text).setJustification(Graphics.TEXT_JUSTIFY_RIGHT);
 
-                // Adjust vertical position to align baselines
                 var largeHeight = dc.getFontHeight(largeFont);
                 var xtinyHeight = dc.getFontHeight(xtinyFont);
                 valueViewAiSRUnit.locY = valueViewAiSR.locY + (largeHeight - xtinyHeight) * 0.7;
             }
         }
 
-        // Dynamically position eventual BG centered between IOB and COB/sensRatio
         if (valueViewEventualBG != null && valueViewIOB != null && valueViewIOBUnit != null) {
-            // Calculate the right edge of IOB+unit
             var iobTextWidth = dc.getTextWidthInPixels(iobString, largeFont);
             var iobUnitWidth = dc.getTextWidthInPixels("U", xtinyFont);
             var iobRightEdge = (screenWidth * leftMargin) + iobTextWidth + 2 + iobUnitWidth;
             
-            // Calculate left edge of right side element
             var rightSideLeftEdge;
             if (showingSensRatio && valueViewAiSRIcon != null) {
-                // For sensRatio: use icon position as left edge
                 rightSideLeftEdge = valueViewAiSRIcon.locX;
             } else {
-                // For COB: calculate where COB value starts (to the left of "g")
                 var cobTextWidth = dc.getTextWidthInPixels(rightSideString, largeFont);
                 var gUnitWidth = dc.getTextWidthInPixels("g", xtinyFont);
                 rightSideLeftEdge = (screenWidth * (1 - rightMargin)) - gUnitWidth - 2 - cobTextWidth;
             }
             
-            // Center the eventual BG
             valueViewEventualBG.locX = (iobRightEdge + rightSideLeftEdge) / 2;
         }
 
-        // Set background color and text values
         (View.findDrawableById("Background") as Text).setColor(loopColor);
         
         var value = View.findDrawableById("value") as Text;
@@ -234,94 +229,84 @@ function onLayout(dc as Dc) as Void {
         var valueAiSRUnit = View.findDrawableById("valueAiSRUnit") as Text;
         var bgLabel = View.findDrawableById("label") as Text;
         
-// Check if background is RED or YELLOW
-    var backgroundIsRed = (loopColor == Graphics.COLOR_RED);
-    var backgroundIsYellow = (loopColor == Graphics.COLOR_YELLOW);
-    
-    if (backgroundIsRed) {
-        // RED background - force all text to WHITE for contrast (regardless of dark/light mode)
-        if (bgLabel != null) {
-            bgLabel.setColor(Graphics.COLOR_WHITE);
-        }
-        value.setColor(Graphics.COLOR_WHITE);
-        valueEventualBG.setColor(Graphics.COLOR_WHITE);
+        var backgroundIsRed = (loopColor == Graphics.COLOR_RED);
+        var backgroundIsYellow = (loopColor == Graphics.COLOR_YELLOW);
         
-        if (valueIOB != null && valueIOBUnit != null) {
-            valueIOB.setColor(Graphics.COLOR_WHITE);
-            valueIOBUnit.setColor(Graphics.COLOR_WHITE);
-        }
-        
-        if (showingSensRatio) {
-            valueAiSR.setColor(Graphics.COLOR_WHITE);
-        } else {
-            valueAiSR.setColor(Graphics.COLOR_WHITE);
-            valueAiSRUnit.setColor(Graphics.COLOR_WHITE);
-        }
-    } else if (getBackgroundColor() == Graphics.COLOR_BLACK) {
-        // Black background - use light/bright colors
-        if (bgLabel != null) {
-            bgLabel.setColor(Graphics.COLOR_GREEN);
-        }
-        value.setColor(Graphics.COLOR_WHITE);
-        valueEventualBG.setColor(Graphics.COLOR_WHITE);
-        
-        // IOB color
-        if (valueIOB != null && valueIOBUnit != null) {
-            if (backgroundIsYellow) {
+        if (backgroundIsRed) {
+            if (bgLabel != null) {
+                bgLabel.setColor(Graphics.COLOR_WHITE);
+            }
+            value.setColor(Graphics.COLOR_WHITE);
+            valueEventualBG.setColor(Graphics.COLOR_WHITE);
+            
+            if (valueIOB != null && valueIOBUnit != null) {
                 valueIOB.setColor(Graphics.COLOR_WHITE);
                 valueIOBUnit.setColor(Graphics.COLOR_WHITE);
-            } else {
-                valueIOB.setColor(Graphics.COLOR_BLUE);
-                valueIOBUnit.setColor(Graphics.COLOR_BLUE);
             }
-        }
-        
-        // Right side color
-        if (showingSensRatio) {
-            valueAiSR.setColor(Graphics.COLOR_WHITE);
-        } else {
-            // COB
-            if (backgroundIsYellow) {
+            
+            if (showingSensRatio) {
+                valueAiSR.setColor(Graphics.COLOR_WHITE);
+            } else {
                 valueAiSR.setColor(Graphics.COLOR_WHITE);
                 valueAiSRUnit.setColor(Graphics.COLOR_WHITE);
-            } else {
-                valueAiSR.setColor(Graphics.COLOR_YELLOW);
-                valueAiSRUnit.setColor(Graphics.COLOR_YELLOW);
             }
-        }
-    } else {
-        // White background - use dark colors
-        if (bgLabel != null) {
-            bgLabel.setColor(Graphics.COLOR_DK_GREEN);
-        }
-        value.setColor(Graphics.COLOR_BLACK);
-        valueEventualBG.setColor(Graphics.COLOR_BLACK);
-        
-        // IOB color
-        if (valueIOB != null && valueIOBUnit != null) {
-            if (backgroundIsYellow) {
-                valueIOB.setColor(Graphics.COLOR_BLACK);
-                valueIOBUnit.setColor(Graphics.COLOR_BLACK);
-            } else {
-                valueIOB.setColor(Graphics.COLOR_DK_BLUE);
-                valueIOBUnit.setColor(Graphics.COLOR_DK_BLUE);
+        } else if (getBackgroundColor() == Graphics.COLOR_BLACK) {
+            if (bgLabel != null) {
+                bgLabel.setColor(Graphics.COLOR_GREEN);
             }
-        }
-        
-        // Right side color
-        if (showingSensRatio) {
-            valueAiSR.setColor(Graphics.COLOR_BLACK);
+            value.setColor(Graphics.COLOR_WHITE);
+            valueEventualBG.setColor(Graphics.COLOR_WHITE);
+            
+            if (valueIOB != null && valueIOBUnit != null) {
+                if (backgroundIsYellow) {
+                    valueIOB.setColor(Graphics.COLOR_WHITE);
+                    valueIOBUnit.setColor(Graphics.COLOR_WHITE);
+                } else {
+                    valueIOB.setColor(Graphics.COLOR_BLUE);
+                    valueIOBUnit.setColor(Graphics.COLOR_BLUE);
+                }
+            }
+            
+            if (showingSensRatio) {
+                valueAiSR.setColor(Graphics.COLOR_WHITE);
+            } else {
+                if (backgroundIsYellow) {
+                    valueAiSR.setColor(Graphics.COLOR_WHITE);
+                    valueAiSRUnit.setColor(Graphics.COLOR_WHITE);
+                } else {
+                    valueAiSR.setColor(Graphics.COLOR_YELLOW);
+                    valueAiSRUnit.setColor(Graphics.COLOR_YELLOW);
+                }
+            }
         } else {
-            // COB
-            if (backgroundIsYellow) {
+            if (bgLabel != null) {
+                bgLabel.setColor(Graphics.COLOR_DK_GREEN);
+            }
+            value.setColor(Graphics.COLOR_BLACK);
+            valueEventualBG.setColor(Graphics.COLOR_BLACK);
+            
+            if (valueIOB != null && valueIOBUnit != null) {
+                if (backgroundIsYellow) {
+                    valueIOB.setColor(Graphics.COLOR_BLACK);
+                    valueIOBUnit.setColor(Graphics.COLOR_BLACK);
+                } else {
+                    valueIOB.setColor(Graphics.COLOR_DK_BLUE);
+                    valueIOBUnit.setColor(Graphics.COLOR_DK_BLUE);
+                }
+            }
+            
+            if (showingSensRatio) {
                 valueAiSR.setColor(Graphics.COLOR_BLACK);
-                valueAiSRUnit.setColor(Graphics.COLOR_BLACK);
             } else {
-                valueAiSR.setColor(Graphics.COLOR_ORANGE);
-                valueAiSRUnit.setColor(Graphics.COLOR_ORANGE);
+                if (backgroundIsYellow) {
+                    valueAiSR.setColor(Graphics.COLOR_BLACK);
+                    valueAiSRUnit.setColor(Graphics.COLOR_BLACK);
+                } else {
+                    valueAiSR.setColor(Graphics.COLOR_ORANGE);
+                    valueAiSRUnit.setColor(Graphics.COLOR_ORANGE);
+                }
             }
         }
-    }
         
         value.setText(bgString);
         valueEventualBG.setText(evBGString);
@@ -334,13 +319,12 @@ function onLayout(dc as Dc) as Void {
         }
         if (valueAiSRUnit != null) {
             if (showingSensRatio) {
-                valueAiSRUnit.setText("");  // No unit for sensRatio
+                valueAiSRUnit.setText("");
             } else {
-                valueAiSRUnit.setText("g");  // Show "g" for COB
+                valueAiSRUnit.setText("g");
             }
         }
 
-        // Set icon bitmaps
         var arrowView = View.findDrawableById("arrow") as Bitmap;
         var aiSRIconView = View.findDrawableById("aiSRIcon") as Bitmap;
         
@@ -359,7 +343,36 @@ function onLayout(dc as Dc) as Void {
         View.onUpdate(dc);
     }
 
-    // Keep these functions returning just numbers (no units)
+    function getGlucoseText(status) as String {
+        if (status instanceof Dictionary) {
+            var glucose = status["sgv"];
+            if (glucose instanceof Number || glucose instanceof Float || glucose instanceof Double) {
+                var convertedValue = convertGlucoseValue(glucose, status);
+                if (isMMOL(status)) {
+                    return convertedValue.format("%2.1f");
+                } else {
+                    return convertedValue.toNumber().format("%d");
+                }
+            }
+        }
+        return "--";
+    }
+
+    function getEventualBGText(status) as String {
+        if (status instanceof Dictionary) {
+            var ebg = status["eventualBG"];
+            if (ebg instanceof Number || ebg instanceof Float || ebg instanceof Double) {
+                var convertedValue = convertGlucoseValue(ebg, status);
+                if (isMMOL(status)) {
+                    return convertedValue.format("%2.1f");
+                } else {
+                    return convertedValue.toNumber().format("%d");
+                }
+            }
+        }
+        return "--";
+    }
+
     function getCOBText(status as Dictionary) as String {
         if (status == null) {
             return "--";
@@ -368,8 +381,8 @@ function onLayout(dc as Dc) as Void {
         if (cob == null) {
             return "--";
         }
-        if (cob instanceof Number) {
-            return cob.format("%3.1f");
+        if (cob instanceof Number || cob instanceof Float || cob instanceof Double) {
+            return cob.toNumber().format("%d");
         } else {
             return cob.toString();
         }
@@ -383,7 +396,7 @@ function onLayout(dc as Dc) as Void {
         if (iob == null) {
             return "--";
         }
-        if (iob instanceof Number) {
+        if (iob instanceof Number || iob instanceof Float || iob instanceof Double) {
             return iob.format("%2.1f");
         } else {
             return iob.toString();
@@ -391,29 +404,39 @@ function onLayout(dc as Dc) as Void {
     }
 
     function getMinutes(status) as Number {
-
-        if (status instanceof Dictionary)  {
-            var lastLoopDate = status["lastLoopDateInterval"] as Number;
+        if (status instanceof Dictionary) {
+            var lastLoopDate = status["date"];
             if (lastLoopDate == null) {
                 return -1;
             }
-            var now = Time.now().value() as Number;
-            // Calculate seconds difference
-            var deltaSeconds = now - lastLoopDate;
-            // Round up to the nearest minute if delta is positive
-            var min = (deltaSeconds > 0) ? ((deltaSeconds + 59) / 60) : 0;
-            return min;
-        } else {
-            return -1;
+            
+            // Type safety: ensure we have a number before calling toLong()
+            if (!(lastLoopDate instanceof Number || lastLoopDate instanceof Long)) {
+                return -1;
+            }
+            
+            var lastLoopMs = lastLoopDate.toLong();
+            var lastLoopSeconds = lastLoopMs / 1000;
+            
+            var now = Time.now().value();
+            var deltaSeconds = now - lastLoopSeconds;
+            
+            if (deltaSeconds <= 0) {
+                return 0;
+            }
+            
+            var minutes = (deltaSeconds / 60).toNumber();
+            return minutes;
         }
+        return -1;
     }
 
     function getLoopColor(min as Number) as Number {
         if (min < 0) {
             return getBackgroundColor() as Number;
-        } else if (min <= 5) {
+        } else if (min <= 7) {
             return getBackgroundColor() as Number;
-        } else if (min <= 10) {
+        } else if (min <= 13) {
             return Graphics.COLOR_YELLOW as Number;
         } else {
             return Graphics.COLOR_RED as Number;
@@ -424,15 +447,21 @@ function onLayout(dc as Dc) as Void {
         if (status == null) {
             return "--";
         }
-        var sensRatio = status["sensRatio"] as String;
-        var sensRatioString = (sensRatio == null) ? "--" : sensRatio;
-        return sensRatioString;
+        var sensRatio = status["sensRatio"];
+        if (sensRatio == null) {
+            return "--";
+        }
+        if (sensRatio instanceof Number || sensRatio instanceof Float || sensRatio instanceof Double) {
+            return sensRatio.format("%2.2f");
+        } else {
+            return sensRatio.toString();
+        }
     }
 
     function getDirectionBlack(status) as BitmapType {
         var bitmap = WatchUi.loadResource(Rez.Drawables.UnknownB);
-        if (status instanceof Dictionary)  {
-            var trend = status["trendRaw"] as String;
+        if (status instanceof Dictionary) {
+            var trend = status["direction"] as String;
             if (trend == null) {
                 return bitmap;
             }
@@ -462,18 +491,14 @@ function onLayout(dc as Dc) as Void {
                     break;
                 default: break;
             }
-
-            return bitmap;
-        } else {
-            return bitmap;
         }
-
+        return bitmap;
     }
 
     function getDirection(status) as BitmapType {
         var bitmap = WatchUi.loadResource(Rez.Drawables.Unknown);
-        if (status instanceof Dictionary)  {
-            var trend = status["trendRaw"] as String;
+        if (status instanceof Dictionary) {
+            var trend = status["direction"] as String;
             if (trend == null) {
                 return bitmap;
             }
@@ -504,10 +529,7 @@ function onLayout(dc as Dc) as Void {
                     break;
                 default: break;
             }
-
-            return bitmap;
-        } else {
-            return bitmap;
         }
+        return bitmap;
     }
 }

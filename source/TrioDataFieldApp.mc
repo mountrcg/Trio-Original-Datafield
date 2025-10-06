@@ -41,28 +41,24 @@ class TrioDataFieldApp extends Application.AppBase {
         
         // This will always give you a timestamp from exactly 4 minutes ago
         var currentTime = Time.now().value();
-        var minutesAgo = currentTime - 60; // 240 seconds = 4 minutes
+        var minutesAgo = currentTime - 240; // 240 seconds = 4 minutes
+        var minutesAgoMillis = minutesAgo * 1000; // Convert to milliseconds
+        
+        // Sample data with mg/dL units
         var sample = {
-            "glucose" => "80",
-            "lastLoopDateInterval" => minutesAgo, // Always 4 minutes ago
-            "delta" => "-20",
-            "iob" => "-1.1",  // This is what we'll display instead of delta
-            "cob" => "18",
-            "eventualBGRaw" => "165",
-            "trendRaw" => "FortyFiveDown",
-            //"sensRatio" => "1.1"
-        } as Dictionary;
-
-        var mmolsample = {
-            "glucose" => "10.9",
-            "lastLoopDateInterval" => minutesAgo, // Always 4 minutes ago
-            "delta" => "-2.3",
-            "iob" => "2.9",
-            "cob" => "70.2",
-            "isf" => "3.7",
-            "sensRatio" => "1.63",
-            //"eventualBGRaw" => "9.9",
-            "trendRaw" => "FortyFiveDown"
+            "sgv" => 145,
+            "date" => minutesAgoMillis, // In milliseconds
+            "delta" => -15,
+            "direction" => "FortyFiveDown",
+            "units_hint" => "mgdl",
+            "iob" => 2.5,
+            "cob" => 25,
+            "tbr" => 1.45,           // Basal rate in U/hr
+            "eventualBG" => 89,
+            "isf" => 50,
+            "sensRatio" => 0.65,
+            "displayDataType1" => "sensRatio",   // Right side: sensRatio, isf, or cob
+            "displayDataType2" => "eventualBG"   // Middle: eventualBG or tbr
         } as Dictionary;
         
         //uncomment for testing
@@ -71,14 +67,27 @@ class TrioDataFieldApp extends Application.AppBase {
 
     function onBackgroundData(data) {
         if (data instanceof Number || data == null) {
-            System.println("Not a dictionary");
+            System.println("Not a dictionary/array");
         } else {
             System.println("try to update the status");
             if (Background has :registerForPhoneAppMessageEvent) {
                 System.println("updated with registerForPhoneAppMessageEvent");
             } else {
                 System.println("update status");
-                Application.Storage.setValue("status", data as Dictionary);
+                
+                // Handle both Array and Dictionary formats
+                if (data instanceof Array) {
+                    // Extract first element if it's an array
+                    if (data.size() > 0) {
+                        var firstEntry = data[0];
+                        if (firstEntry instanceof Dictionary) {
+                            Application.Storage.setValue("status", firstEntry as Dictionary);
+                        }
+                    }
+                } else if (data instanceof Dictionary) {
+                    Application.Storage.setValue("status", data as Dictionary);
+                }
+                
                 Background.registerForTemporalEvent(new Time.Duration(5 * 60));
             }
         }
