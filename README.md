@@ -1,15 +1,13 @@
 # Garmin Watch watchface
 
-The repository contains the watchface for Garmin usable with Trio system.
+The repository contains the datafield for Garmin usable with Trio system.
 
-| units | Data Type | Fenix8Pro |
-| --- | --- | --- |
-| mmol | sensRatio | <img src="https://github.com/mountrcg/Trio-GarminWatchface/blob/main/Fenix8Pro_mmol-sensRatio.png" width="300"> |
-| mgdl | COB | <img src="https://github.com/mountrcg/Trio-GarminWatchface/blob/main/Fenix8Pro_mgdl-COB.png" width="300"> |
+| Data Type | Fenix8Pro |
+| --- | --- |
+| cob | <img width="300" alt="Screenshot 2025-10-15 at 18 00 16" src="https://github.com/user-attachments/assets/3d7bc181-511f-4dbe-a1d1-1c47f2cf4bcf" /> |
+| sensRatio | <img width="300" alt="Screenshot 2025-10-15 at 18 07 34" src="https://github.com/user-attachments/assets/f704f36f-d826-4c25-a47f-04246fccc005" /> |
 
-The WF requires a large PR applied to Trio, which is not yet done. In the meanwhile you can use the branch Garmin from my Trio repo, if you want access to the new Garmin watch implementations. They let you define within Trio app whether to show COB or sensitivity ratio.
-
-You could also use the popular Swissalpine xDrip+/Spike watchface. I will make the derivative for Trio available here in the release section as prg's only. So no settings, it will be defaulted to Trio as data source.
+The datafield requires a large PR applied to Trio, which is not yet done. In the meanwhile you can use the branch Garmin from my Trio repo, if you want access to the new Garmin watch implementations. They let you define within Trio app whether to show COB or sensitivity ratio.
 
 ## How to use 
 
