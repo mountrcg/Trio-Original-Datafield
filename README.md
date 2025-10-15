@@ -1,12 +1,28 @@
-# Garmin Watch Datafield
+# Garmin Watch watchface
 
-The repository contains the data field for Garmin usable with Trio system. 
+The repository contains the watchface for Garmin usable with Trio system.
+
+| units | Data Type | Fenix8Pro |
+| --- | --- | --- |
+| mmol | sensRatio | <img src="https://github.com/mountrcg/Trio-GarminWatchface/blob/main/Fenix8Pro_mmol-sensRatio.png" width="300"> |
+| mgdl | COB | <img src="https://github.com/mountrcg/Trio-GarminWatchface/blob/main/Fenix8Pro_mgdl-COB.png" width="300"> |
+
+The WF requires a large PR applied to Trio, which is not yet done. In the meanwhile you can use the branch Garmin from my Trio repo, if you want access to the new Garmin watch implementations. They let you define within Trio app whether to show COB or sensitivity ratio.
+
+You could also use the popular Swissalpine xDrip+/Spike watchface. I will make the derivative for Trio available here in the release section as prg's only. So no settings, it will be defaulted to Trio as data source.
 
 ## How to use 
 
-The easy solution is to download the *.prg files for you garmin devices. The files are available here : https://github.com/mountrcg/...
+To sideload the prg in your devices there are several methods. 
 
-To install the prg in your devices :
+### I use Android File Transfer:
+Make sure Garmin Express is not installed
+- Make sure usb mode in watch is MTP (media transfer)
+- Attach your watch to computer by USB. Android File Transfer starts automatically.
+- Drop the prg file in the folder GARMIN/Apps
+- quit Android File Transfer, detach Watch from USB
+
+### May be it also works with Garmin Express:
 - Install Garmin Express and configure with your account
 - Attach your watch to computer by USB. You should see your watch as USB-drive then.
 - It's usually named "GARMIN" as device (on Mac too, plus it have drive letter in windows, for example, let's say it's drive "E:").
@@ -16,7 +32,7 @@ Open your watch storage in Explorer or Finder, enter into folder GARMIN and then
 - Eject garmin's USB-storage, wait until it writes all caches and only then detach your watch from USB.
 - Enter into watch settings and choose ConnectIQ watchface or enable/disable widget or work with that freshly installed app.
 
-## How to start
+## How to start building yourself
 
 Download the Garmin SDK.
 You need to install Visual Studio Code. In it you will need to install the Monkey C plugin. 
