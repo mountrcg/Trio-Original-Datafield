@@ -45,7 +45,6 @@ class TrioBGServiceDelegate extends System.ServiceDelegate {
         System.println("****onPhoneAppMessage*****");
         System.println(msg);
         Application.Storage.setValue("status", msg.data as Dictionary);
-        WatchUi.requestUpdate();
         Background.exit(null);
     }
 

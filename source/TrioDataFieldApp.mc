@@ -82,8 +82,6 @@ class TrioDataFieldApp extends Application.AppBase {
                 Background.registerForTemporalEvent(new Time.Duration(5 * 60));
             }
         }
-        System.println("requestUpdate");
-        WatchUi.requestUpdate();
     }
 
     // onStop() is called when your application is exiting
