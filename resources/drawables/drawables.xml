@@ -1,5 +1,30 @@
 <drawables>
-    <bitmap id="LauncherIcon" filename="launcher_40_40.png" />
+    <bitmap id="LauncherIcon" filename="launcher_65_65.png" />
+
+    <!-- aiSR icons -->
+    <bitmap id="aiSRDark" x="center" y="center" filename="UpDown.svg" scaleX="6%" scaleY="6%" scaleRelativeTo="screen">
+        <palette>
+            <color>00FF00</color>  <!-- Light green for dark backgrounds -->
+        </palette>
+    </bitmap>
+
+    <bitmap id="aiSRLight" x="center" y="center" filename="UpDown.svg" scaleX="6%" scaleY="6%" scaleRelativeTo="screen">
+        <palette>
+            <color>008000</color>  <!-- Dark green for light backgrounds -->
+        </palette>
+    </bitmap>
+
+    <!-- IOB drop icons -->
+    <bitmap id="iobDark" x="center" y="center" filename="drop.svg" scaleX="6%" scaleY="6%" scaleRelativeTo="screen">
+        <palette>
+            <color>00B3D2</color> <!-- Bright blue for light backgrounds -->
+        </palette>
+    </bitmap>
+    <bitmap id="iobLight" x="center" y="center" filename="drop.svg" scaleX="6%" scaleY="6%" scaleRelativeTo="screen">
+        <palette>
+            <color>87CEEB</color> <!-- Light blue for dark backgrounds -->
+        </palette>
+    </bitmap>
 
     <!-- aiSR icons -->
     <bitmap id="aiSRDark" x="center" y="center" filename="UpDown.svg" scaleX="6%" scaleY="6%" scaleRelativeTo="screen">

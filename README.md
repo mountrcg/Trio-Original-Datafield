@@ -1,4 +1,4 @@
-# Garmin Watch Datafield
+# Garmin Watch watchface
 
 The repository contains the datafield for Garmin usable with Trio system.
 
@@ -11,9 +11,16 @@ The datafield requires a large PR applied to Trio, which is not yet done. In the
 
 ## How to use 
 
-The easy solution is to download the *.prg files for you garmin devices. The files are available here : https://github.com/mountrcg/...
+To sideload the prg in your devices there are several methods. 
 
-To install the prg in your devices :
+### I use Android File Transfer:
+Make sure Garmin Express is not installed
+- Make sure usb mode in watch is MTP (media transfer)
+- Attach your watch to computer by USB. Android File Transfer starts automatically.
+- Drop the prg file in the folder GARMIN/Apps
+- quit Android File Transfer, detach Watch from USB
+
+### May be it also works with Garmin Express:
 - Install Garmin Express and configure with your account
 - Attach your watch to computer by USB. You should see your watch as USB-drive then.
 - It's usually named "GARMIN" as device (on Mac too, plus it have drive letter in windows, for example, let's say it's drive "E:").
@@ -23,7 +30,7 @@ Open your watch storage in Explorer or Finder, enter into folder GARMIN and then
 - Eject garmin's USB-storage, wait until it writes all caches and only then detach your watch from USB.
 - Enter into watch settings and choose ConnectIQ watchface or enable/disable widget or work with that freshly installed app.
 
-## How to start
+## How to start building yourself
 
 Download the Garmin SDK.
 You need to install Visual Studio Code. In it you will need to install the Monkey C plugin. 

@@ -44,7 +44,21 @@ class TrioBGServiceDelegate extends System.ServiceDelegate {
     function onPhoneAppMessage(msg) {
         System.println("****onPhoneAppMessage*****");
         System.println(msg);
-        Application.Storage.setValue("status", msg.data as Dictionary);
+        var data = msg.data;
+        
+        if (data instanceof Array) {
+            // Extract first element if it's an array
+            if (data.size() > 0) {
+                var firstEntry = data[0];
+                if (firstEntry instanceof Dictionary) {
+                    Application.Storage.setValue("status", firstEntry as Dictionary);
+                }
+            }
+        } else if (data instanceof Dictionary) {
+            // Store directly if it's already a dictionary
+            Application.Storage.setValue("status", data as Dictionary);
+        }
+        
         Background.exit(null);
     }
 

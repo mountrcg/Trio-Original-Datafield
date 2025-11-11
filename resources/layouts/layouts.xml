@@ -1,68 +1,100 @@
 <layouts>
-    <!-- A generic, centered layout with consistent anchoring -->
+    <!-- Main layout with percentage-based positioning -->
     <layout id="MainLayout">
         <drawable class="Background" />
         
-        <!-- Use consistent anchoring - all text elements use same baseline reference -->
-        <label id="label" x="0" y="0" color="Graphics.COLOR_DK_GRAY" 
+        <!-- FIRST LINE: BG label, glucose value, arrow -->
+        <label id="label" x="30%" y="25%" color="Graphics.COLOR_DK_GREEN" 
                justification="Graphics.TEXT_JUSTIFY_CENTER" 
                font="Graphics.FONT_SYSTEM_XTINY" />
                
-        <label id="value" x="0" y="0" color="Graphics.COLOR_WHITE" 
+        <label id="value" x="center" y="10%" color="Graphics.COLOR_WHITE" 
                justification="Graphics.TEXT_JUSTIFY_CENTER" 
                font="Graphics.FONT_SYSTEM_LARGE" />
                
-        <label id="valueDelta" x="0" y="0" color="Graphics.COLOR_WHITE" 
-               justification="Graphics.TEXT_JUSTIFY_CENTER" 
-               font="Graphics.FONT_SYSTEM_SMALL" />
-               
-        <label id="valueTime" x="0" y="0" color="Graphics.COLOR_WHITE" 
-               justification="Graphics.TEXT_JUSTIFY_CENTER" 
-               font="Graphics.FONT_SYSTEM_XTINY" />
-               
-        <label id="valueAiSR" x="0" y="0" color="Graphics.COLOR_WHITE" 
-               justification="Graphics.TEXT_JUSTIFY_CENTER" 
-               font="Graphics.FONT_SYSTEM_SMALL" />
-               
-        <!-- For bitmaps, use consistent positioning -->
-        <bitmap id="arrow" x="0" y="0" filename="../drawables/Unknown.svg" 
+        <bitmap id="arrow" x="65%" y="25%" filename="../drawables/Unknown.svg" 
                 scaleX="6%" scaleY="6%" scaleRelativeTo="screen">
             <palette>
                 <color>FFFFFF</color>
             </palette> 
         </bitmap>
         
-        <bitmap id="aiSRIcon" x="0" y="0" filename="../drawables/UpDown.svg" 
+        <!-- SECOND LINE: IOB, eventual BG, sensRatio/COB -->        
+        <label id="valueIOB" x="25%" y="56%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_CENTER" 
+               font="Graphics.FONT_SYSTEM_LARGE" />
+        
+        <label id="valueIOBUnit" x="25%" y="56%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_CENTER" 
+               font="Graphics.FONT_SYSTEM_XTINY" />
+               
+        <label id="valueEventualBG" x="center" y="61%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_CENTER" 
+               font="Graphics.FONT_SYSTEM_SMALL" />
+        
+        <bitmap id="aiSRIcon" x="64%" y="70%" filename="../drawables/UpDown.svg" 
                 scaleX="6%" scaleY="6%" scaleRelativeTo="screen">
             <palette>
-                <color>90EE90</color>
+                <color>00FF00</color>
+            </palette> 
+        </bitmap>
+               
+        <label id="valueAiSR" x="85%" y="56%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_RIGHT" 
+               font="Graphics.FONT_SYSTEM_LARGE" />
+        
+        <label id="valueAiSRUnit" x="92%" y="56%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_RIGHT" 
+               font="Graphics.FONT_SYSTEM_XTINY" />
+    </layout>
+
+    <!-- Bottom/Inverted layout - lines completely swapped -->
+    <layout id="BottomLayout">
+        <drawable class="Background" />
+        
+        <!-- FIRST LINE (top position): IOB, eventual BG, sensRatio/COB -->
+        <label id="valueIOB" x="25%" y="0%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_CENTER" 
+               font="Graphics.FONT_SYSTEM_LARGE" />
+        
+        <label id="valueIOBUnit" x="25%" y="0%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_CENTER" 
+               font="Graphics.FONT_SYSTEM_XTINY" />
+               
+        <label id="valueEventualBG" x="center" y="7%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_CENTER" 
+               font="Graphics.FONT_SYSTEM_SMALL" />
+        
+        <bitmap id="aiSRIcon" x="64%" y="14%" filename="../drawables/UpDown.svg" 
+                scaleX="6%" scaleY="6%" scaleRelativeTo="screen">
+            <palette>
+                <color>00FF00</color>
+            </palette> 
+        </bitmap>
+               
+        <label id="valueAiSR" x="85%" y="0%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_RIGHT" 
+               font="Graphics.FONT_SYSTEM_LARGE" />
+        
+        <label id="valueAiSRUnit" x="92%" y="0%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_RIGHT" 
+               font="Graphics.FONT_SYSTEM_XTINY" />
+        
+        <!-- SECOND LINE (bottom position): BG label, glucose value, arrow -->
+        <label id="label" x="35%" y="60%" color="Graphics.COLOR_DK_GREEN" 
+               justification="Graphics.TEXT_JUSTIFY_CENTER" 
+               font="Graphics.FONT_SYSTEM_XTINY" />
+               
+        <label id="value" x="center" y="45%" color="Graphics.COLOR_WHITE" 
+               justification="Graphics.TEXT_JUSTIFY_CENTER" 
+               font="Graphics.FONT_SYSTEM_LARGE" />
+               
+        <bitmap id="arrow" x="65%" y="60%" filename="../drawables/Unknown.svg" 
+                scaleX="6%" scaleY="6%" scaleRelativeTo="screen">
+            <palette>
+                <color>FFFFFF</color>
             </palette> 
         </bitmap>
     </layout>
 
-    <!-- Layouts used for the four quadrants - unchanged -->
-    <layout id="TopLeftLayout">
-        <drawable class="Background"/>
-        <label id="label" x="95" y="75" color="Graphics.COLOR_DK_GRAY" justification="Graphics.TEXT_JUSTIFY_RIGHT" font="Graphics.FONT_XTINY" />
-        <label id="value" x="95" y="42" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_RIGHT" font="Graphics.FONT_LARGE" />
-        <label id="valueDelta" x="30" y="5" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_RIGHT" font="Graphics.FONT_XTINY" />
-    </layout>
-    <layout id="TopRightLayout">
-        <drawable class="Background" />
-        <label id="label" x="14" y="75" color="Graphics.COLOR_DK_GRAY" justification="Graphics.TEXT_JUSTIFY_LEFT" font="Graphics.FONT_XTINY" />
-        <label id="value" x="14" y="42" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_LEFT" font="Graphics.FONT_LARGE" />
-         <label id="valueDelta" x="14" y="5" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_LEFT" font="Graphics.FONT_XTINY" />
-    </layout>
-    <layout id="BottomLeftLayout">
-        <drawable class="Background" />
-        <label id="label" x="95" y="10" color="Graphics.COLOR_LT_GRAY" justification="Graphics.TEXT_JUSTIFY_RIGHT" font="Graphics.FONT_XTINY" />
-        <label id="value" x="95" y="27" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_RIGHT" font="Graphics.FONT_LARGE" />
-        <label id="valueDelta" x="95" y="40" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_LEFT" font="Graphics.FONT_XTINY" />
-    </layout>
-    <layout id="BottomRightLayout">
-        <drawable class="Background" />
-        <label id="label" x="5" y="5" color="Graphics.COLOR_DK_GRAY" justification="Graphics.TEXT_JUSTIFY_LEFT" font="Graphics.FONT_XTINY" />
-        <label id="value" x="14" y="5" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_LEFT" font="Graphics.FONT_LARGE" />
-        <label id="valueDelta" x="30" y="5" color="Graphics.COLOR_WHITE" justification="Graphics.TEXT_JUSTIFY_LEFT" font="Graphics.FONT_XTINY" />
-    </layout>
 </layouts>
