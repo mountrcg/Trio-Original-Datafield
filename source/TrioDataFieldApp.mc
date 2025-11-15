@@ -42,11 +42,11 @@ class TrioDataFieldApp extends Application.AppBase {
         // This will always give you a timestamp from exactly 4 minutes ago
         var currentTime = Time.now().value();
         var minutesAgo = currentTime - 240; // 240 seconds = 4 minutes
-        var minutesAgoMillis = minutesAgo * 1000; // Convert to milliseconds
+        var minutesAgoMillis = minutesAgo.toLong() * 1000; // Use Long to avoid overflow
         
         // Sample data with mg/dL units
         var sample = {
-            "sgv" => 145,
+            "sgv" => 115,
             "date" => minutesAgoMillis, // In milliseconds
             "delta" => -15,
             "direction" => "FortyFiveDown",
@@ -57,8 +57,8 @@ class TrioDataFieldApp extends Application.AppBase {
             "eventualBG" => 89,
             "isf" => 50,
             "sensRatio" => 0.65,
-            "displayDataType1" => "sensRatio",   // Right side: sensRatio, isf, or cob
-            "displayDataType2" => "eventualBG"   // Middle: eventualBG or tbr
+            "displayPrimaryAttributeChoice" => "sensRatio", // Right side: sensRatio, isf, or cob
+            "displaySecondaryAttributeChoice" => "eventualBG" // Middle: eventualBG or tbr
         } as Dictionary;
         
         //uncomment for testing
