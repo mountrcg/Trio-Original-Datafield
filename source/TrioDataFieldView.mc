@@ -82,6 +82,7 @@ class TrioDataFieldView extends WatchUi.DataField {
         var evBGString;
         var rightSideString;
         var showingSensRatio = false;
+        var showingEventualBG = false;
         var iobString;
         
         // Safely get status from storage - handle both Array and Dictionary
@@ -104,23 +105,34 @@ class TrioDataFieldView extends WatchUi.DataField {
             evBGString = "(---)";
             rightSideString = "??";
             iobString = "??";
+            showingEventualBG = false;
         } else {
             bgString = getGlucoseText(status);
             var min = getMinutes(status);
             loopColor = getLoopColor(min);
-            evBGString = "(" + getEventualBGText(status) + ")";
             
-            var sensRatio = status["sensRatio"];
-            var cob = status["cob"];
+            var displayType2 = status["displaySecondaryAttributeChoice"];
             
-            if (sensRatio != null) {
+            if (displayType2 != null && displayType2.equals("eventualBG")) {
+                evBGString = "(" + getEventualBGText(status) + ")";
+                showingEventualBG = true;
+            } else {
+                // Fallback to TBR
+                evBGString = "[" + getTBRText(status) + "]";
+                showingEventualBG = false;
+            }
+            
+            var displayType1 = status["displayPrimaryAttributeChoice"];
+            
+            if (displayType1 != null && displayType1.equals("sensRatio")) {
                 rightSideString = getSensRatioText(status);
                 showingSensRatio = true;
-            } else if (cob != null) {
-                rightSideString = getCOBText(status);
-                showingSensRatio = false;
+            } else if (displayType1 != null && displayType1.equals("isf")) {
+                rightSideString = getISFText(status);
+                showingSensRatio = true;
             } else {
-                rightSideString = "??";
+                // Fallback to COB
+                rightSideString = getCOBText(status);
                 showingSensRatio = false;
             }
             
@@ -455,6 +467,47 @@ class TrioDataFieldView extends WatchUi.DataField {
             return sensRatio.format("%2.2f");
         } else {
             return sensRatio.toString();
+        }
+    }
+
+    function getISFText(status as Dictionary) as String {
+        if (status == null) {
+            return "--";
+        }
+        var isf = status["isf"];
+        if (isf == null) {
+            return "--";
+        }
+        if (isf instanceof Number || isf instanceof Float || isf instanceof Double) {
+            var convertedValue = convertGlucoseValue(isf, status);
+            if (isMMOL(status)) {
+                return convertedValue.format("%2.1f");
+            } else {
+                return convertedValue.toNumber().format("%d");
+            }
+        } else {
+            return isf.toString();
+        }
+    }
+
+    function getTBRText(status as Dictionary) as String {
+        if (status == null) {
+            return "--";
+        }
+        var tbr = status["tbr"];
+        if (tbr == null) {
+            return "--";
+        }
+        if (tbr instanceof Number || tbr instanceof Float || tbr instanceof Double) {
+            if (tbr == tbr.toNumber()) {
+                return tbr.format("%.0f");
+            } else if ((tbr * 10) == (tbr * 10).toNumber()) {
+                return tbr.format("%.1f");
+            } else {
+                return tbr.format("%.2f");
+            }
+        } else {
+            return tbr.toString();
         }
     }
 

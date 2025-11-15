@@ -46,19 +46,19 @@ class TrioDataFieldApp extends Application.AppBase {
         
         // Sample data with mg/dL units
         var sample = {
-            "sgv" => 145,
+            "sgv" => 115,
             "date" => minutesAgoMillis, // In milliseconds
             "delta" => -15,
             "direction" => "FortyFiveDown",
-            "units_hint" => "mgdl",
+            "units_hint" => "mmol",
             "iob" => 2.5,
             "cob" => 25,
             "tbr" => 1.45,           // Basal rate in U/hr
             "eventualBG" => 89,
             "isf" => 50,
             "sensRatio" => 0.65,
-            "displayDataType1" => "sensRatio",   // Right side: sensRatio, isf, or cob
-            "displayDataType2" => "eventualBG"   // Middle: eventualBG or tbr
+            "displayPrimaryAttributeChoice" => "sensRatio", // Right side: sensRatio, isf, or cob
+            "displaySecondaryAttributeChoice" => "eventualBG" // Middle: eventualBG or tbr
         } as Dictionary;
         
         //uncomment for testing
