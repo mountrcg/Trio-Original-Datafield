@@ -17,8 +17,7 @@ import Toybox.Graphics;
 
 (:background)
 class TrioDataFieldApp extends Application.AppBase {
-    var inBackground=false;
-    
+
     function initialize() {
         AppBase.initialize();
     }
@@ -95,10 +94,8 @@ class TrioDataFieldApp extends Application.AppBase {
 
     // onStop() is called when your application is exiting
     function onStop(state as Dictionary?) as Void {
-        if(!inBackground) {
-            System.println("stop temp event");
-            Background.deleteTemporalEvent();
-        }
+        System.println("stop temp event");
+        Background.deleteTemporalEvent();
     }
 
     //! Return the initial view of your application here
@@ -107,7 +104,6 @@ class TrioDataFieldApp extends Application.AppBase {
     }
 
     function getServiceDelegate() {
-        inBackground=true;
         System.println("start background");
         return [new TrioBGServiceDelegate()];
     }
