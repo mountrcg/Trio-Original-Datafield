@@ -38,7 +38,7 @@ class TrioBGServiceDelegate extends System.ServiceDelegate {
     function onTemporalEvent() {
         System.println("Temp event");
         Communications.transmit("status", null, new CommsRelay(method(:onTransmitComplete)));
-        Background.exit(null);
+        // Let onTransmitComplete handle Background.exit() after transmit completes
     }
 
     function onPhoneAppMessage(msg) {
