@@ -59,7 +59,7 @@ class TrioBGServiceDelegate extends System.ServiceDelegate {
             Application.Storage.setValue("status", data as Dictionary);
         }
         
-        Background.exit(null);
+        Background.exit(true);
     }
 
     function onTransmitComplete(isSuccess) {
