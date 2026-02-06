@@ -65,6 +65,18 @@ class TrioDataFieldApp extends Application.AppBase {
     }
 
     function onBackgroundData(data) {
+        // Handle Boolean from onTransmitComplete (status request result)
+        if (data instanceof Lang.Boolean) {
+            if (data == true) {
+                System.println("Trio: Status transmit succeeded - re-registering temporal event");
+                Background.deleteTemporalEvent();
+                Background.registerForTemporalEvent(new Time.Duration(5 * 60));
+            } else {
+                System.println("Trio: Status transmit failed");
+            }
+            return;
+        }
+
         if (data instanceof Number || data == null) {
             System.println("Not a dictionary/array");
         } else {
