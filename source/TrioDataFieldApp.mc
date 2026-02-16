@@ -38,15 +38,18 @@ class TrioDataFieldApp extends Application.AppBase {
             System.println("****background not available on this device****");
         }
         
-        // This will always give you a timestamp from exactly 4 minutes ago
+        // Calculate timestamps for test data
         var currentTime = Time.now().value();
-        var minutesAgo = currentTime - 240; // 240 seconds = 4 minutes
-        var minutesAgoMillis = minutesAgo.toLong() * 1000; // Use Long to avoid overflow
-        
+        var loopSecondsAgo = 120; // Loop ran 2 minutes ago
+        var glucoseSecondsAgo = 330; // Glucose reading ~5.5 min ago
+        var loopDateMs = (currentTime - loopSecondsAgo).toLong() * 1000;
+        var glucoseDateMs = (currentTime - glucoseSecondsAgo).toLong() * 1000;
+
         // Sample data with mg/dL units
         var sample = {
             "sgv" => 115,
-            "date" => minutesAgoMillis, // In milliseconds
+            "date" => loopDateMs, // Loop timestamp in milliseconds
+            "glucoseDate" => glucoseDateMs, // Glucose reading timestamp
             "delta" => -15,
             "direction" => "FortyFiveDown",
             "units_hint" => "mgdl",
