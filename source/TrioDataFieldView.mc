@@ -10,11 +10,16 @@
 import Toybox.Activity;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
+import Toybox.System;
 import Toybox.WatchUi;
 
 class TrioDataFieldView extends WatchUi.DataField {
 
     private var isBottomPosition = false;
+    private var isRoundScreen = false;
+    private var screenYOffset = 0;
+    private var fullScreenRadius = 0;
 
     function initialize() {
         DataField.initialize();
@@ -34,8 +39,25 @@ class TrioDataFieldView extends WatchUi.DataField {
             View.setLayout(Rez.Layouts.BottomLayout(dc));
         }
 
+        var deviceSettings = System.getDeviceSettings();
+        isRoundScreen = (deviceSettings.screenShape == System.SCREEN_SHAPE_ROUND);
+        if (isRoundScreen) {
+            var fullScreenHeight = deviceSettings.screenHeight;
+            fullScreenRadius = fullScreenHeight / 2;
+            var dfHeight = dc.getHeight();
+            // OBSCURE_BOTTOM = bottom edge clipped = field is at TOP of screen
+            // OBSCURE_TOP = top edge clipped = field is at BOTTOM of screen
+            if ((obscurityFlags & OBSCURE_BOTTOM) != 0) {
+                screenYOffset = fullScreenHeight - dfHeight;
+            } else if ((obscurityFlags & OBSCURE_TOP) != 0) {
+                screenYOffset = 0;
+            } else {
+                screenYOffset = (fullScreenHeight - dfHeight) / 2;
+            }
+        }
+
         (View.findDrawableById("label") as Text).setText(Rez.Strings.label);
-        
+
         var screenHeight = dc.getHeight();
         if (screenHeight <= 260) {
             var valueView = View.findDrawableById("value") as Text;
@@ -74,6 +96,29 @@ class TrioDataFieldView extends WatchUi.DataField {
             return value.toFloat();
         }
         return 0.0;
+    }
+
+    // Returns [safeLeftX, safeRightX] for a given Y position on round screens.
+    // On rectangular screens, returns fixed 8% margins.
+    function getSafeBounds(screenWidth as Number, localY as Number, padding as Number) as Array {
+        var leftMargin = (screenWidth * 0.08).toNumber();
+        var rightMargin = screenWidth - leftMargin;
+        if (!isRoundScreen) {
+            return [leftMargin, rightMargin];
+        }
+        var dy = (screenYOffset + localY - fullScreenRadius).toFloat();
+        var r = fullScreenRadius.toFloat();
+        var disc = r * r - dy * dy;
+        if (disc <= 0) {
+            return [screenWidth / 2, screenWidth / 2];
+        }
+        var halfChord = Math.sqrt(disc).toNumber();
+        var circleLeft = fullScreenRadius - halfChord + padding;
+        var circleRight = fullScreenRadius + halfChord - padding;
+        return [
+            (circleLeft > leftMargin) ? circleLeft : leftMargin,
+            (circleRight < rightMargin) ? circleRight : rightMargin
+        ];
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -143,29 +188,50 @@ class TrioDataFieldView extends WatchUi.DataField {
         var centerX = screenWidth / 2;
         var largeFont = Graphics.FONT_SYSTEM_LARGE;
         var xtinyFont = Graphics.FONT_SYSTEM_XTINY;
-        
+        var roundPadding = 8;
+        var isFullWidthField = !isRoundScreen || (screenWidth > fullScreenRadius);
+        var bottomLinePadding = (isRoundScreen && isFullWidthField) ? 42 : 8;
+
         var currentValueWidth = dc.getTextWidthInPixels(bgString, largeFont);
-        
+
         var labelView = View.findDrawableById("label");
         if (labelView != null) {
-            labelView.locX = centerX - (currentValueWidth / 2) - (screenWidth * 0.07);
+            var labelX = centerX - (currentValueWidth / 2) - (screenWidth * 0.07);
+            if (isRoundScreen) {
+                var bgBounds = getSafeBounds(screenWidth, labelView.locY, roundPadding);
+                if (labelX < bgBounds[0]) { labelX = bgBounds[0]; }
+            }
+            labelView.locX = labelX;
         }
-        
+
         var valueViewArrow = View.findDrawableById("arrow");
         if (valueViewArrow != null) {
-            valueViewArrow.locX = centerX + (currentValueWidth / 2) + (screenWidth * 0.03);
+            var arrowX = centerX + (currentValueWidth / 2) + (screenWidth * 0.03);
+            if (isRoundScreen) {
+                var bgBounds = getSafeBounds(screenWidth, valueViewArrow.locY, roundPadding);
+                if (arrowX > bgBounds[1]) { arrowX = bgBounds[1]; }
+            }
+            valueViewArrow.locX = arrowX;
         }
 
         var valueViewIOB = View.findDrawableById("valueIOB");
         var valueViewIOBUnit = View.findDrawableById("valueIOBUnit");
         var valueViewEventualBG = View.findDrawableById("valueEventualBG");
-        
-        var leftMargin = 0.08;
-        var rightMargin = 0.08;
+
+        var secondLineFont = isRoundScreen ? (isFullWidthField ? Graphics.FONT_SYSTEM_MEDIUM : Graphics.FONT_SYSTEM_SMALL) : largeFont;
+        if (isRoundScreen) {
+            if (valueViewIOB != null) { (valueViewIOB as Text).setFont(secondLineFont); }
+            if (valueViewIOBUnit != null) { (valueViewIOBUnit as Text).setFont(xtinyFont); }
+        }
+
+        var secondLineY = (valueViewIOB != null) ? valueViewIOB.locY : 0;
+        var slBounds = getSafeBounds(screenWidth, secondLineY, bottomLinePadding);
+        var safeLeft = slBounds[0];
+        var safeRight = slBounds[1];
 
         if (valueViewIOB != null && valueViewIOBUnit != null) {
-            var iobTextWidth = dc.getTextWidthInPixels(iobString, largeFont);
-            var iobStartX = screenWidth * leftMargin;
+            var iobTextWidth = dc.getTextWidthInPixels(iobString, secondLineFont);
+            var iobStartX = safeLeft;
             
             valueViewIOB.locX = iobStartX;
             (valueViewIOB as Text).setJustification(Graphics.TEXT_JUSTIFY_LEFT);
@@ -173,32 +239,36 @@ class TrioDataFieldView extends WatchUi.DataField {
             valueViewIOBUnit.locX = iobStartX + iobTextWidth + 2;
             (valueViewIOBUnit as Text).setJustification(Graphics.TEXT_JUSTIFY_LEFT);
 
-            var largeHeight = dc.getFontHeight(largeFont);
+            var slHeight = dc.getFontHeight(secondLineFont);
             var xtinyHeight = dc.getFontHeight(xtinyFont);
-            valueViewIOBUnit.locY = valueViewIOB.locY + (largeHeight - xtinyHeight) * 0.8;
+            valueViewIOBUnit.locY = valueViewIOB.locY + (slHeight - xtinyHeight) * 0.8;
         }
 
         var valueViewAiSRIcon = View.findDrawableById("aiSRIcon");
         var valueViewAiSR = View.findDrawableById("valueAiSR");
         var valueViewAiSRUnit = View.findDrawableById("valueAiSRUnit");
 
+        if (isRoundScreen && valueViewAiSR != null) {
+            (valueViewAiSR as Text).setFont(secondLineFont);
+        }
+
         if (showingSensRatio) {
             if (valueViewAiSRIcon != null && valueViewAiSR != null && valueViewAiSRUnit != null) {
-                var sensRatioTextWidth = dc.getTextWidthInPixels(rightSideString, largeFont);
-                var rightEdgeX = screenWidth * (1 - rightMargin);
-                
+                var sensRatioTextWidth = dc.getTextWidthInPixels(rightSideString, secondLineFont);
+                var rightEdgeX = safeRight;
+
                 valueViewAiSR.locX = rightEdgeX;
                 (valueViewAiSR as Text).setJustification(Graphics.TEXT_JUSTIFY_RIGHT);
-                
+
                 valueViewAiSRIcon.locX = rightEdgeX - sensRatioTextWidth - (screenWidth * 0.07);
-                
+
                 valueViewAiSRUnit.locX = -100;
             }
         } else {
             if (valueViewAiSRIcon != null && valueViewAiSR != null && valueViewAiSRUnit != null) {
-                var cobTextWidth = dc.getTextWidthInPixels(rightSideString, largeFont);
+                var cobTextWidth = dc.getTextWidthInPixels(rightSideString, secondLineFont);
                 var gUnitWidth = dc.getTextWidthInPixels("g", xtinyFont);
-                var rightEdgeX = screenWidth * (1 - rightMargin);
+                var rightEdgeX = safeRight;
 
                 valueViewAiSRIcon.locX = -100;
 
@@ -208,24 +278,24 @@ class TrioDataFieldView extends WatchUi.DataField {
                 valueViewAiSR.locX = rightEdgeX - gUnitWidth - 2;
                 (valueViewAiSR as Text).setJustification(Graphics.TEXT_JUSTIFY_RIGHT);
 
-                var largeHeight = dc.getFontHeight(largeFont);
+                var slHeight = dc.getFontHeight(secondLineFont);
                 var xtinyHeight = dc.getFontHeight(xtinyFont);
-                valueViewAiSRUnit.locY = valueViewAiSR.locY + (largeHeight - xtinyHeight) * 0.7;
+                valueViewAiSRUnit.locY = valueViewAiSR.locY + (slHeight - xtinyHeight) * 0.7;
             }
         }
 
         if (valueViewEventualBG != null && valueViewIOB != null && valueViewIOBUnit != null) {
-            var iobTextWidth = dc.getTextWidthInPixels(iobString, largeFont);
+            var iobTextWidth = dc.getTextWidthInPixels(iobString, secondLineFont);
             var iobUnitWidth = dc.getTextWidthInPixels("U", xtinyFont);
-            var iobRightEdge = (screenWidth * leftMargin) + iobTextWidth + 2 + iobUnitWidth;
-            
+            var iobRightEdge = safeLeft + iobTextWidth + 2 + iobUnitWidth;
+
             var rightSideLeftEdge;
             if (showingSensRatio && valueViewAiSRIcon != null) {
                 rightSideLeftEdge = valueViewAiSRIcon.locX;
             } else {
-                var cobTextWidth = dc.getTextWidthInPixels(rightSideString, largeFont);
+                var cobTextWidth = dc.getTextWidthInPixels(rightSideString, secondLineFont);
                 var gUnitWidth = dc.getTextWidthInPixels("g", xtinyFont);
-                rightSideLeftEdge = (screenWidth * (1 - rightMargin)) - gUnitWidth - 2 - cobTextWidth;
+                rightSideLeftEdge = safeRight - gUnitWidth - 2 - cobTextWidth;
             }
             
             valueViewEventualBG.locX = (iobRightEdge + rightSideLeftEdge) / 2;
