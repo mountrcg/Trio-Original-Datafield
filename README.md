@@ -1,6 +1,6 @@
 # Garmin Watch watchface
 
-The repository contains the datafield for Garmin usable with Trio system.
+The repository contains the datafield for Garmin usable with [Trio](https://github.com/nightscout/Trio) and [Tai](https://github.com/mountrcg/Tai).
 
 | Data Type | Fenix8Pro |
 | --- | --- |
